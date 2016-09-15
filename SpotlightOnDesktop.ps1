@@ -13,6 +13,7 @@ function global:Set-Wallpaper($Path)
     & ".\$tool" "$Path"
 }
 
+#Function creates copy of file with extesion change
 function global:Move-File ($SourcePath, $Extension) {
     $Name = Get-NameFromPath -Path "$SourcePath"
     Write-Host "Name: " + $Name
@@ -28,6 +29,7 @@ function global:Move-File ($SourcePath, $Extension) {
         } 
 }
 
+#Function gets Path to Spotlight wallpaper
 function global:Get-LockscreenWallpaperPath () {
     $RegistryKey = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\Creative'
     
@@ -35,11 +37,13 @@ function global:Get-LockscreenWallpaperPath () {
     return $Path 
 }
 
+#Function returns file name from path
 function global:Get-NameFromPath ($Path) {
     $Name = Split-Path -Path "$Path" -Leaf -Resolve
     return $Name
 }
 
+#Function that is called on registry value change event
 function global:OnLockscreenWalpaperChange () {
     $Path = Get-LockscreenWallpaperPath  
     if ($Path -eq "") {return}
@@ -54,6 +58,7 @@ function global:OnLockscreenWalpaperChange () {
     }
 }
 
+#Function returns current user SID
 function Get-CurrentUserSid () {
    Add-Type -AssemblyName "System.DirectoryServices.AccountManagement"
     $user = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
@@ -61,10 +66,12 @@ function Get-CurrentUserSid () {
     return $user.Sid
 }
 
+#Function registers event handler. 
 function Register-EventSubscriber () {
     $Sid = Get-CurrentUserSid
     $EventQuery = "SELECT * FROM RegistryValueChangeEvent  WHERE Hive='HKEY_USERS' AND KeyPath='$Sid\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lock Screen\\Creative' AND ValueName='LandscapeAssetPath'"
     Register-WmiEvent -Query $EventQuery -SourceIdentifier LockScreenWallpaperListener -Action { OnLockscreenWalpaperChange}   
 }
 
+#Run script
 Register-EventSubscriber
