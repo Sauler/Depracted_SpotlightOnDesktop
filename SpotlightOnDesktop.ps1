@@ -16,9 +16,7 @@ function global:Set-Wallpaper($Path)
 #Function creates copy of file with extesion change
 function global:Move-File ($SourcePath, $Extension) {
     $Name = Get-NameFromPath -Path "$SourcePath"
-    Write-Host "Name: " + $Name
     $NewName = "$DWallpapers\$Name.$Extension"
-    Write-Host "NewName: " + $NewName
     if (!($NewName -eq "$DWallpapers\Wallpapers.$Extension")) {
             $success = Copy-Item "$SourcePath" -Destination "$NewName" -Force -ErrorAction silentlyContinue -Passthru
             if ($success) {
@@ -75,3 +73,6 @@ function Register-EventSubscriber () {
 
 #Run script
 Register-EventSubscriber
+while ($true) {
+    Wait-Event -SourceIdentifier "LockScreenWallpaperListener"
+}
