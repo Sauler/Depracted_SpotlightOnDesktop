@@ -27,6 +27,12 @@ function global:Move-File ($SourcePath, $Extension) {
         } 
 }
 
+function Get-LockscreenWallpaperPath1 () {
+    $null = [Windows.System.UserProfile.LockScreen,Windows.System.UserProfile,ContentType=WindowsRuntime]
+    $Path = [Windows.System.UserProfile.LockScreen]::OriginalImageFile.AbsolutePath
+    return $Path
+}
+
 #Function gets Path to Spotlight wallpaper
 function global:Get-LockscreenWallpaperPath () {
     $RegistryKey = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lock Screen\Creative'
@@ -43,16 +49,24 @@ function global:Get-NameFromPath ($Path) {
 
 #Function that is called on registry value change event
 function global:OnLockscreenWalpaperChange () {
-    $Path = Get-LockscreenWallpaperPath  
-    if ($Path -eq "") {return}
-    $Name = Get-NameFromPath -Path "$Path"
-    $WallpaperPath = Move-File -SourcePath "$Path" -Extension "jpg"
-    Write-Host $WallpaperPath
-
-    if ($Name -eq "asset.jpg") {
-        Set-Wallpaper -Path "$Path"    
-    } else {
-        Set-Wallpaper -Path "$WallpaperPath"
+    Write-Host "Wallpaper changed!"
+    $Path = Get-LockscreenWallpaperPath 
+    if ($Path -eq "") {
+        $Path = Get-LockscreenWallpaperPath1
+        $Path = $Path -replace "%7B","{"
+        $Path = $Path -replace "%7D","}"
+        $Path = $Path -replace "%20"," "
+        Write-Host "Path: "$Path
+        Set-Wallpaper -Path "$Path" 
+    }
+    else {
+        $Name = Get-NameFromPath -Path "$Path"
+        $WallpaperPath = Move-File -SourcePath "$Path" -Extension "jpg"
+        if ($Name -eq "asset.jpg") {
+            Set-Wallpaper -Path "$Path"    
+        } else {
+            Set-Wallpaper -Path "$WallpaperPath"
+        }
     }
 }
 
@@ -68,10 +82,14 @@ function Get-CurrentUserSid () {
 function Register-EventSubscriber () {
     $Sid = Get-CurrentUserSid
     $EventQuery = "SELECT * FROM RegistryValueChangeEvent  WHERE Hive='HKEY_USERS' AND KeyPath='$Sid\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lock Screen\\Creative' AND ValueName='LandscapeAssetPath'"
-    Register-WmiEvent -Query $EventQuery -SourceIdentifier LockScreenWallpaperListener -Action { OnLockscreenWalpaperChange}   
+    Register-WmiEvent -Query $EventQuery -SourceIdentifier LockScreenWallpaperListener -Action {OnLockscreenWalpaperChange}   
+
+    $EventQuery = "SELECT * FROM RegistryTreeChangeEvent  WHERE Hive='HKEY_LOCAL_MACHINE' AND RootPath='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\SystemProtectedUserData\\$Sid\\AnyoneRead\\LockScreen'"
+    Register-WmiEvent -Query $EventQuery -SourceIdentifier LockScreenWallpaperListener1 -Action {OnLockscreenWalpaperChange}   
 }
 
 #Run script
+OnLockscreenWalpaperChange
 Register-EventSubscriber
 while ($true) {
     Wait-Event -SourceIdentifier "LockScreenWallpaperListener"
