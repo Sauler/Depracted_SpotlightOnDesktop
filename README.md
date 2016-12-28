@@ -14,7 +14,6 @@ SpotlightOnDesktop is powershell script which allows you to always have beautifu
 
 ### Additional info
   - Script works only with Windows 10
-  - Script work only with Spotlight wallpapers. If you set your own wallpaper this script cannot handle it!
 
 
 ### License
