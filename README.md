@@ -1,5 +1,8 @@
 # SpotlightOnDesktop
 
+## Warning
+This script is depracted. Use [WallpaperSync](https://github.com/Sauler/WallpaperSync)!
+
 ### Description
 
 SpotlightOnDesktop is powershell script which allows you to always have beautiful wallpaper from Windows 10 Lockscreen on your desktop.
